@@ -64,12 +64,13 @@ public class RiderService extends JobService {
     @Override
     public boolean onStartJob(JobParameters params) {
         scheduleJobs(getApplicationContext());        
-        return false;
+        return true;
     }
 
     @Override
     public boolean onStopJob(JobParameters params) {        
-        return false;
+        scheduleJobs(getApplicationContext());        
+		return true;
     }
 
     public static void scheduleJobs(Context context) {
