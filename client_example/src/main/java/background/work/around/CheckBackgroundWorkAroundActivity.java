@@ -18,6 +18,7 @@ import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.app.NotificationManager;
 
 import java.util.Locale;
 
@@ -25,9 +26,6 @@ public class CheckBackgroundWorkAroundActivity extends Activity {
 
     private static final String TARGET_PACKAGE =
             "background.work.around";
-    
-    private static final String TARGET_LISTENER =
-            "background.work.around.NotificationService";
 
     private TextView textView;
     private Button button;
@@ -46,6 +44,11 @@ public class CheckBackgroundWorkAroundActivity extends Activity {
     } catch (Exception e) {
         return false;
     } }
+
+    private boolean isDndAccessGranted() {
+        NotificationManager nm = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+        return nm != null && nm.isNotificationPolicyAccessGranted();
+    }
 
 
     @Override
@@ -114,7 +117,7 @@ public class CheckBackgroundWorkAroundActivity extends Activity {
         }
         
 
-        if (!isPackageEnabled() || !isNotificationListenerEnabled() || !isBatteryOptimizationsIgnored() || !isTargetPackageNotificationsEnabled()) {
+        if (!isPackageEnabled() || !isDndAccessGranted() || !isBatteryOptimizationsIgnored() || !isTargetPackageNotificationsEnabled()) {
 
             textView.setText(t(
                     "To continue, fully complete BackgroundWorkAround setup",
@@ -180,33 +183,5 @@ public class CheckBackgroundWorkAroundActivity extends Activity {
         } catch (Exception e) {
             return false;
         }
-    }
-
-    private boolean isNotificationListenerEnabled() {
-
-        String flat = Settings.Secure.getString(
-                getContentResolver(),
-                "enabled_notification_listeners"
-        );
-
-        if (flat == null) return false;
-
-        ComponentName target = new ComponentName(
-                TARGET_PACKAGE,
-                TARGET_LISTENER
-        );
-
-        String[] split = flat.split(":");
-
-        for (String s : split) {
-
-            ComponentName cn = ComponentName.unflattenFromString(s);
-
-            if (cn != null && cn.equals(target)) {
-                return true;
-            }
-        }
-
-        return false;
     }
 }
