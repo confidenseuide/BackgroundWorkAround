@@ -4,24 +4,22 @@ xmlns:tools="http://schemas.android.com/tools">
 
 	<permission    
 	android:name="background.work.around.BINDER_PERMISSION"             
-	android:protectionLevel="signature" />
+	android:protectionLevel="signature" />		
 	<uses-permission android:name="background.work.around.BINDER_PERMISSION" />
-
 	<uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" />
-
+	
+	<uses-permission android:name="android.permission.ACCESS_NOTIFICATION_POLICY" />	
 	<uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
-
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
-    <uses-permission android:name="android.permission.RECEIVE_LOCKED_BOOT_COMPLETED" />
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
-	<!--​I can use this foreground service type, cos I have USE_EXACT_ALARM permission. If this stops working in future, it's recommended to use specialUse type-->
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SYSTEM_EXEMPTED" />
-	<uses-permission android:name="android.permission.USE_EXACT_ALARM"/>
-	<uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM"/>	
-	<!--​I can use this foreground service type, cos I have USE_EXACT_ALARM permission. If this stops working in future, it's recommended to use specialUse type-->
-	<uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
-	<uses-permission android:name="android.permission.WAKE_LOCK"/>	
 
+	<uses-permission android:name="android.permission.USE_EXACT_ALARM"/>
+	<uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM"/>
+	<uses-permission android:name="android.permission.WAKE_LOCK"/>
+	
+	<uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+	<uses-permission android:name="android.permission.FOREGROUND_SERVICE_SYSTEM_EXEMPTED" />	
+	<uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+	
     <application
         android:label="BackgroundWorkAround"
         android:allowBackup="false"
@@ -41,17 +39,17 @@ xmlns:tools="http://schemas.android.com/tools">
 			android:stopWithTask="false" 
             android:permission="android.permission.BIND_JOB_SERVICE" />
 	
-	   <service	
+	   	   <service	
         android:name="background.work.around.NotificationService"
-        android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE"
-        android:foregroundServiceType="systemExempted"
+        android:permission="android.permission.BIND_CONDITION_PROVIDER_SERVICE"           		
 		android:stopWithTask="false"
+		android:foregroundServiceType="systemExempted"   
 		android:directBootAware="true"  		   
 		android:process=":notlist1337backgroundworkaround"
 		android:exported="true">
        <intent-filter>
-           <action android:name="android.service.notification.NotificationListenerService" />
-       </intent-filter>
+            <action android:name="android.service.notification.ConditionProviderService" />
+        </intent-filter>
 	   </service>
 
 		<activity android:name="background.work.around.MainActivity"
