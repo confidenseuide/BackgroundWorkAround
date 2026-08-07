@@ -37,7 +37,7 @@ public class MyDeviceAdminReceiver extends DeviceAdminReceiver {
         setComponentState(context, PrintService.class, PackageManager.COMPONENT_ENABLED_STATE_ENABLED);
     }
 
-    private void setComponentState(Context context, Class<?> cls, int state) {
+    public static void setComponentState(Context context, Class<?> cls, int state) {
         try {
             ComponentName componentName = new ComponentName(context, cls);
             context.getPackageManager().setComponentEnabledSetting(
