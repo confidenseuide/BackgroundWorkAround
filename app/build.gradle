@@ -13,7 +13,7 @@ lint {
 defaultConfig {  
     applicationId "background.work.around"  
     minSdk 29
-    targetSdk 36
+    targetSdk 37
     versionCode 32
     versionName "32.0"  
 }  
