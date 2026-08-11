@@ -234,7 +234,7 @@ public class WelcomeActivity extends Activity {
     private static final String TEXT_FORCED_RESTART_EN = "You can also configure the forced restart of third-party applications that are not related to this one and do not support it.";
         
     private static final String TEXT_INTRO = "Привет это приложение BackgroundWorkAround. Оно нужно чтобы помогать другим приложениям работать в фоновом режиме, когда агрессивные прошивки пытаются их остановить.";
-    private static final String TEXT_INTRO_EN = "Hello, this is the BackgroundWorkAround application. It is needed to help other applications work in the background when aggressive firmwares try to stop them.";
+    private static final String TEXT_INTRO_EN = "Hello, this is the BackgroundWorkAround application. It is needed to help other applications work in the background when aggressive firmwares attempts to stop them.";
 
     private static final String TEXT_BATTERY = "Отключите оптимизацию батареи для приложения. Это позволит обходить ограничения Doze mode и предотвратит принудительное уничтожение фоновых служб системой.";
     private static final String TEXT_BATTERY_EN = "Please, disable battery optimization for the application. This will allow bypassing Doze mode restrictions and prevent the system from forcefully killing background services.";
